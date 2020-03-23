@@ -57,11 +57,6 @@ function Map() {
     return <Redirect push to={redirectTarget} />;
   }
 
-  /* mandatory */
-  let mapHandler = event => {
-    alert('No model yet');
-  };
-
   function checkLocationPermission() {
     let hideSeeMyStateButton = false;
     navigator.permissions.query({name:'geolocation'}).then(function(result) {
