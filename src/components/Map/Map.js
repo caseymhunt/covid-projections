@@ -6,8 +6,8 @@ import Typography from '@material-ui/core/Typography';
 import { CallToActionButton, MapInstructionsContainer } from './Map.style';
 import { STATES } from 'enums';
 
-const ROULETTE_SLOW_INTERVAL =  900;
-const ROULETTE_FAST_INTERVAL =  120;
+const ROULETTE_SLOW_INTERVAL =  1000;
+const ROULETTE_FAST_INTERVAL =  200;
 
 function Map() {
   let [redirectTarget, setRedirectTarget] = useState();
@@ -17,6 +17,7 @@ function Map() {
   let [seeMyStateButtonHidden, setSeeMyStateButtonHidden] = useState(true);
   let [geolocatedStateCode, setGeolocatedStateCode] = useState(null);
 
+  let rouletteAnimationTimer = null;
   const reverseGeocoder = new window.BDCReverseGeocode();
 
   const statesCustomConfig = () =>
@@ -34,10 +35,10 @@ function Map() {
 
   useEffect(() => {
     checkLocationPermission();
-    let rouletteAnimationTimer = null;
-
+    
     if (showRouletteAnimation) {
       const animationInterval = isLocating ? ROULETTE_FAST_INTERVAL : ROULETTE_SLOW_INTERVAL;
+      console.log(animationInterval);
       rouletteAnimationTimer = setInterval(() => {
         const stateKeys = Object.keys(STATES);
         const keyIndex = Math.floor(Math.random() * stateKeys.length);
@@ -50,7 +51,7 @@ function Map() {
     return () => {
       clearTimeout(rouletteAnimationTimer);
     }
-  }, [])
+  }, [showRouletteAnimation, isLocating]);
 
   if (redirectTarget) {
     return <Redirect push to={redirectTarget} />;
@@ -81,6 +82,7 @@ function Map() {
   function seeMyStateButtonHandler() {
     setIsLocating(true)
     setShowRouletteAnimation(true)
+
     if (geolocatedStateCode) {
       setRedirectTarget(`/state/${geolocatedStateCode}`);
       return;
@@ -101,12 +103,12 @@ function Map() {
           resolve(stateCode);
         })
         .catch((error) => {
+          setIsLocating(false);
           setSeeMyStateButtonHidden(true);
         });
     });
   }
 
-  //function getClientLocation(callback) {
   function getClientLocation() {
     return new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy: false});
@@ -126,12 +128,11 @@ function Map() {
         resolve(result);
       });
     });
-
   }
 
   function handleHoverOn() {
-    setShowRouletteAnimation(false);
     setHighlightedState(null);
+    setShowRouletteAnimation(false);
   }
 
   function handleHoverOff() {
@@ -142,7 +143,7 @@ function Map() {
     <div className="Map" onMouseEnter={handleHoverOn} onMouseLeave={handleHoverOff}>
       <MapInstructionsContainer>
         {!seeMyStateButtonHidden && <CallToActionButton disabled={isLocating} onClick={seeMyStateButtonHandler}>
-          <Typography variant="h6" >{isLocating ? "Locating..." : "See my state"}</Typography>
+          <Typography className={isLocating ? "pulse" : ""} variant="h6">{isLocating ? "Locating..." : "See my state"}</Typography>
         </CallToActionButton>}
         <div>{seeMyStateButtonHidden ? "Click the map to see projections for your state." : "or click the map to see projections for any state."}</div>
       </MapInstructionsContainer>
